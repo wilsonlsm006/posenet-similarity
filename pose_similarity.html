@@ -1,0 +1,89 @@
+<html>
+  <head>
+    <!-- Load TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <!-- Load Posenet -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet"></script>
+    <!-- Load posenet-similarity -->
+    <script src="https://cdn.jsdelivr.net/npm/posenet-similarity/dist/posenet-similarity.min.js"></script>
+    <style>
+      .outer {
+        display: flex;
+      }
+      #div1,#div2 {
+        flex: 1 1 0;
+        position: relative;
+      }
+      #pose1,#pose2 {
+        width: 500px;
+      }
+      .point {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 100%;
+        background-color: red;
+      }
+    </style>
+ </head>
+
+  <body>
+    <div class="outer">
+      <div id="div1">
+        <img id='pose1' src='images/ad_pose/1.jpg' crossorigin='anonymous' />
+      </div>
+      <div id="div2">
+        <img id='pose2' src='images/ad_pose/4.jpg' crossorigin='anonymous' />
+      </div>
+    </div>
+  </body>
+
+  <script>
+    var pose1ImageElement = document.getElementById('pose1');
+    var pose2ImageElement = document.getElementById('pose2');
+    var divPose1 = document.getElementById('div1');
+    var divPose2 = document.getElementById('div2');
+
+    function drawPoint(points, container, image) {
+      // const imageWidth = image.naturalWidth;
+      // const imageHeight = image.naturalHeight;
+      const divHeight = image.height;
+      points.forEach(point => {
+          var p = document.createElement('div');
+          p.classList = 'point';
+          p.style.left = point.position.x + 'px';
+          p.style.top = point.position.y + 'px';
+          container.appendChild(p);
+      });
+    }
+    let count = 0
+
+    pose1ImageElement.addEventListener('load', imageLoad)
+    pose2ImageElement.addEventListener('load', imageLoad)
+
+    function imageLoad() {
+      count++
+      if(count === 2) {
+        posenet.load().then(function(net) {
+          // Estimate the two poses
+          return Promise.all([
+            net.estimateSinglePose(pose1ImageElement),
+            net.estimateSinglePose(pose2ImageElement)
+          ])
+        }).then(function(poses){
+          // Calculate the weighted distance between the two poses
+          //var weightedDistance = pns.poseSimilarity(poses[0], poses[1]);
+          var weightedDistance = pns.poseSimilarity(poses[0], poses[1], { strategy: 'cosineSimilarity' });
+          console.log(weightedDistance);
+          console.log(poses[0]);
+          console.log(poses[1]);
+          drawPoint(poses[0].keypoints, divPose1, pose1ImageElement);
+          drawPoint(poses[1].keypoints, divPose2, pose2ImageElement);
+        })
+      }
+    }
+    // For more detailed Posenet setup, please refer its own document.
+    // Load Posenet model
+    
+  </script>
+</html>
